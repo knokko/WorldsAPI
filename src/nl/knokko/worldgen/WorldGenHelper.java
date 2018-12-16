@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.generator.ChunkGenerator.ChunkData;
 import org.bukkit.material.MaterialData;
 
@@ -121,5 +122,52 @@ public class WorldGenHelper {
 			maxRegionZ--;
 			*/
 		return new int[]{minRegionX, minRegionZ, maxRegionX, maxRegionZ};
+	}
+	
+	/**
+	 * @param world The world to search in
+	 * @param x The x-coordinate
+	 * @param z The z-coordinate
+	 * @return The y-coordinate of the highest block of the surface at the given x and z coordinates or
+	 * -1 if there is no surface at the given coordinates
+	 */
+	public static int getSurfaceHeight(World world, int x, int z) {
+		for (int y = world.getMaxHeight(); y >= 0; y--) {
+			Material type = world.getBlockAt(x, y, z).getType();
+			if (type != Material.AIR && type != Material.LONG_GRASS && type != Material.DEAD_BUSH) {
+				return y;
+			}
+		}
+		return -1;
+	}
+	
+	/**
+	 * Builds a nether portal at the given coordinates if there is no nether portal there already.
+	 * @param nether The world to build the portal in
+	 * @param x The x-coordinate of the obsidian block under the portal block with the smallest x-coordinate
+	 * @param y The y-coordinate of the obsidian floor
+	 * @param z The z-coordinate of the portal (the entire portal will have the same z-coordinate)
+	 */
+	public static void buildNetherPortal(World nether, int x, int y, int z) {
+		if (nether.getBlockAt(x, y + 1, z).getType() != Material.PORTAL) {
+			// Floor
+			nether.getBlockAt(x, y, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x + 1, y, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x - 1, y, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x + 2, y, z).setType(Material.OBSIDIAN);
+			// Top
+			nether.getBlockAt(x, y + 4, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x + 1, y + 4, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x - 1, y + 4, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x + 2, y + 4, z).setType(Material.OBSIDIAN);
+			// Left
+			nether.getBlockAt(x - 1, y + 1, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x - 1, y + 2, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x - 1, y + 3, z).setType(Material.OBSIDIAN);
+			// Right
+			nether.getBlockAt(x + 2, y + 1, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x + 2, y + 2, z).setType(Material.OBSIDIAN);
+			nether.getBlockAt(x + 2, y + 3, z).setType(Material.OBSIDIAN);
+		}
 	}
 }
