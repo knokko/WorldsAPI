@@ -168,6 +168,8 @@ public class WorldGenHelper {
 			nether.getBlockAt(x + 2, y + 1, z).setType(Material.OBSIDIAN);
 			nether.getBlockAt(x + 2, y + 2, z).setType(Material.OBSIDIAN);
 			nether.getBlockAt(x + 2, y + 3, z).setType(Material.OBSIDIAN);
+			// Light the portal
+			nether.getBlockAt(x, y + 1, z).setType(Material.FIRE);
 		}
 	}
 }
