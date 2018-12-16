@@ -1,0 +1,7 @@
+name: WorldsAPI
+main: nl.knokko.worldgen.WorldsPlugin
+version: 1.0
+commands:
+  worlds:
+    description: Teleport players to other worlds
+    useage: /worlds tp ...
