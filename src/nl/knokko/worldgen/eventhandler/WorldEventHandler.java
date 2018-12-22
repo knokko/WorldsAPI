@@ -1,6 +1,8 @@
 package nl.knokko.worldgen.eventhandler;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
@@ -27,32 +29,62 @@ public abstract class WorldEventHandler implements Listener {
 	public boolean active(World world) {
 		return world.getName().equals(name);
 	}
-	
+
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onPortal(PlayerPortalEvent event) {
-		if (event.getCause() == TeleportCause.END_PORTAL) {
-			Location dest = getNetherPortalDestination(event.getPlayer());
-			if (dest != null) {
-				event.setTo(dest);
-			} else {
-				event.setCancelled(true);
-			}
-		} else if (event.getCause() == TeleportCause.NETHER_PORTAL) {
-			Location dest = getEndPortalDestination(event.getPlayer());
-			if (dest != null) {
-				event.setTo(dest);
-			} else {
-				event.setCancelled(true);
+		World world = event.getFrom().getWorld();
+		if (active(world)) {
+			if (event.getCause() == TeleportCause.END_PORTAL) {
+				Location dest = getEndPortalDestination(event.getPlayer());
+				if (dest != null) {
+					event.setTo(dest);
+				} else {
+					event.setCancelled(true);
+				}
+			} else if (event.getCause() == TeleportCause.NETHER_PORTAL) {
+				Location loc = event.getFrom();
+				int x = loc.getBlockX();
+				int y = loc.getBlockY();
+				int z = loc.getBlockZ();
+				if (world.getBlockAt(x, y, z).getType() != Material.PORTAL) {
+					if (world.getBlockAt(x, y, z + 1).getType() == Material.PORTAL)
+						z++;
+					else if (world.getBlockAt(x, y, z - 1).getType() == Material.PORTAL)
+						z--;
+					else if (world.getBlockAt(x + 1, y, z).getType() == Material.PORTAL)
+						x++;
+					else if (world.getBlockAt(x - 1, y, z).getType() == Material.PORTAL)
+						x--;
+					else {
+						Bukkit.getLogger().warning("Can't find nether portal at " + loc);
+					}
+				}
+				while (world.getBlockAt(x - 1, y, z).getType() == Material.PORTAL) {
+					x--;
+				}
+				while (world.getBlockAt(x, y - 1, z).getType() == Material.PORTAL) {
+					y--;
+				}
+				while (world.getBlockAt(x, y, z - 1).getType() == Material.PORTAL) {
+					z--;
+				}
+				Location dest = getNetherPortalDestination(world, event.getPlayer(), x, y, z);
+				if (dest != null) {
+					event.setTo(dest);
+				} else {
+					event.setCancelled(true);
+				}
 			}
 		}
 	}
-	
+
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onPortal(EntityPortalEvent event) {
-		// I don't know what kind of portal the entity is using, so this seems the safest thing to do
+		// I don't know what kind of portal the entity is using, so this seems the
+		// safest thing to do
 		event.setCancelled(true);
 	}
-	
+
 	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
 	public void onEntitySpawn(CreatureSpawnEvent event) {
 		if (active(event.getEntity().getWorld()) && cancelSpawn(event.getEntity())) {
@@ -78,31 +110,47 @@ public abstract class WorldEventHandler implements Listener {
 			}
 		}
 	}
-	
+
 	/**
 	 * @return The unique name of the world this event handler is for
 	 */
 	protected abstract String worldName();
 	
-	protected abstract Location getNetherPortalDestination(Player player);
-	
-	protected abstract Location getEndPortalDestination(Player player);
-	
 	/**
-	 * This method allows the event handler of the world to change the item that gets dropped upon breaking
-	 * a block. If this method returns null, the default item will be dropped. Otherwise, the drop will be
-	 * changed to the returned ItemStack.
-	 * @param block The block that is being broken
+	 * Override this method to specify the destination of nether portals in the world of this handler.
+	 * If the player should be teleported, the destination should be returned. Eventually build a return
+	 * portal if there is none yet. If null is returned, the player will not be teleported.
+	 * @param from The world the player is coming from
+	 * @param player The player that is about to be teleported
+	 * @param x The x-coordinate of the most negative portal block
+	 * @param y The y-coorindate of the lowest portal block
+	 * @param z The z-coordinate of the most negative portal block
+	 * @return the destination or null to cancel the teleportation
+	 */
+	protected abstract Location getNetherPortalDestination(World from, Player player, int x, int y, int z);
+
+	protected abstract Location getEndPortalDestination(Player player);
+
+	/**
+	 * This method allows the event handler of the world to change the item that
+	 * gets dropped upon breaking a block. If this method returns null, the default
+	 * item will be dropped. Otherwise, the drop will be changed to the returned
+	 * ItemStack.
+	 * 
+	 * @param block   The block that is being broken
 	 * @param fortune The fortune enchantment level that is being used or 0
-	 * @return the replacement for the drop or null if the default item should be dropped
+	 * @return the replacement for the drop or null if the default item should be
+	 *         dropped
 	 */
 	protected abstract ItemStack overrideDrop(Block block, int fortune);
-	
+
 	/**
-	 * This method allows the event handler to prevent certain entities from spawning or to modify the entity
-	 * before it spawns.
+	 * This method allows the event handler to prevent certain entities from
+	 * spawning or to modify the entity before it spawns.
+	 * 
 	 * @param entity The entity that is about to be spawned
-	 * @return true if the spawn should be prevented, false if the spawn should continue
+	 * @return true if the spawn should be prevented, false if the spawn should
+	 *         continue
 	 */
 	protected abstract boolean cancelSpawn(LivingEntity entity);
 }
