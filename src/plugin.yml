@@ -1,4 +1,4 @@
-name: WorldsAPI
+name: WorldsCore
 main: nl.knokko.worldgen.WorldsPlugin
 version: 1.0
 commands:
