@@ -38,7 +38,7 @@ public class WorldGenHelper {
 			for(int z = 0; z < 16; z++){
 				int height = getHeight(baseHeight, minHeight, maxHeight, chunkX * 16 + x, chunkZ * 16 + z, hms);
 				if(height > d)
-					height = (int) ((maxHeight * height) / (float)(height + 90));
+					height = d + ((maxHeight - d) * (height - d)) / (maxHeight + height - 2 * d);
 				heights[i++] = height;
 			}
 		}
@@ -149,6 +149,7 @@ public class WorldGenHelper {
 	 * @param z The z-coordinate of the portal (the entire portal will have the same z-coordinate)
 	 */
 	public static void buildNetherPortal(World nether, int x, int y, int z) {
+		// TODO create a solid system for building nether portals
 		if (nether.getBlockAt(x, y + 1, z).getType() != Material.PORTAL) {
 			// Floor
 			nether.getBlockAt(x, y, z).setType(Material.OBSIDIAN);
@@ -171,5 +172,9 @@ public class WorldGenHelper {
 			// Light the portal
 			nether.getBlockAt(x, y + 1, z).setType(Material.FIRE);
 		}
+	}
+	
+	public static boolean isNetherPortalTop(World world, int x, int y, int z) {
+		return world.getBlockAt(x, y, z).getType() == Material.OBSIDIAN && world.getBlockAt(x, y - 1, z).getType() == Material.PORTAL;
 	}
 }
